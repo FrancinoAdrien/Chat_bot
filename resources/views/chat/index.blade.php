@@ -6,7 +6,7 @@
 
 @section('header-actions')
     @if($connections->isNotEmpty())
-        <div class="relative group">
+        <div class="relative">
             <select id="connection-selector" onchange="changeConnection(this.value)" class="appearance-none bg-slate-900/50 border border-slate-700/50 text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-10 py-2.5 transition-all hover:bg-slate-800/80 cursor-pointer">
                 @foreach($connections as $conn)
                     <option value="{{ $conn->id }}" {{ $selectedConnection?->id === $conn->id ? 'selected' : '' }}>
@@ -20,6 +20,46 @@
             </div>
         </div>
     @endif
+@endsection
+
+@section('sidebar-extra')
+<!-- History Panel (injected into sidebar via section) -->
+<div class="border-t border-slate-800/50 mt-2 pt-2">
+    <div class="px-4 mb-2 flex items-center justify-between">
+        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Historique</p>
+        <a href="{{ route('chat.index') }}" id="new-chat-btn"
+           class="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 transition-colors px-2 py-1 rounded-lg hover:bg-indigo-500/10">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Nouveau
+        </a>
+    </div>
+
+    <div class="px-2 space-y-0.5 overflow-y-auto" style="max-height: 300px;">
+        @forelse($sessions as $session)
+            <div class="group flex items-center gap-1 rounded-lg hover:bg-slate-800/50 transition-colors {{ $currentSession?->id === $session->id ? 'bg-indigo-500/10 border border-indigo-500/20' : '' }}">
+                <a href="{{ route('chat.index', ['session' => $session->id]) }}"
+                   class="flex-1 min-w-0 px-2 py-2">
+                    <p class="text-xs text-slate-300 truncate {{ $currentSession?->id === $session->id ? 'text-indigo-300' : '' }}">
+                        {{ $session->title }}
+                    </p>
+                    <p class="text-[10px] text-slate-600 mt-0.5">
+                        {{ $session->last_message_at?->diffForHumans() ?? $session->created_at->diffForHumans() }}
+                    </p>
+                </a>
+                <button onclick="deleteSession({{ $session->id }}, this)"
+                    class="opacity-0 group-hover:opacity-100 mr-1.5 p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        @empty
+            <p class="text-xs text-slate-600 px-3 py-2 italic">Aucune conversation.</p>
+        @endforelse
+    </div>
+</div>
 @endsection
 
 @section('content')
@@ -71,7 +111,7 @@
                         </div>
                     </div>
                     <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-1">
-                        U
+                        {{ substr(auth()->user()->name, 0, 1) }}
                     </div>
                 </div>
 
@@ -121,7 +161,8 @@
         <div class="border-t border-slate-800/50 p-4">
             <form id="chat-form" class="flex gap-3">
                 @csrf
-                <input type="hidden" id="connection-id" value="{{ $selectedConnection->id }}">
+                <input type="hidden" id="connection-id" value="{{ $selectedConnection?->id }}">
+                <input type="hidden" id="session-id" value="{{ $currentSession?->id }}">
 
                 <div class="flex-1 relative">
                     <textarea
@@ -147,7 +188,7 @@
     </div>
 
     @else
-    {{-- No connection selected --}}
+    {{-- No connection --}}
     <div class="flex-1 flex items-center justify-center">
         <div class="text-center">
             <div class="w-16 h-16 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center mx-auto mb-4">
@@ -156,9 +197,11 @@
                 </svg>
             </div>
             <p class="text-slate-400 text-sm">Sélectionnez ou créez une connexion pour démarrer</p>
+            @if(auth()->user()->isAdmin())
             <a href="{{ route('connections.index') }}" class="text-indigo-400 text-xs mt-2 inline-block hover:text-indigo-300">
                 + Ajouter une connexion API
             </a>
+            @endif
         </div>
     </div>
     @endif
@@ -168,21 +211,21 @@
 
 @push('scripts')
 <script>
-const chatMessages  = document.getElementById('chat-messages');
-const chatForm      = document.getElementById('chat-form');
-const chatInput     = document.getElementById('chat-input');
-const sendBtn       = document.getElementById('send-btn');
-const sendText      = document.getElementById('send-text');
-const sendIcon      = document.getElementById('send-icon');
+const chatMessages    = document.getElementById('chat-messages');
+const chatForm        = document.getElementById('chat-form');
+const chatInput       = document.getElementById('chat-input');
+const sendBtn         = document.getElementById('send-btn');
+const sendText        = document.getElementById('send-text');
+const sendIcon        = document.getElementById('send-icon');
 const typingIndicator = document.getElementById('typing-indicator');
-const connectionId  = document.getElementById('connection-id')?.value;
+const connectionIdEl  = document.getElementById('connection-id');
+const sessionIdEl     = document.getElementById('session-id');
+const userInitial     = '{{ substr(auth()->user()->name, 0, 1) }}';
 
-// Change connection in selector
 function changeConnection(id) {
     window.location.href = `?connection_id=${id}`;
 }
 
-// Scroll to bottom on load
 scrollToBottom();
 
 // Auto-resize textarea
@@ -202,13 +245,13 @@ chatInput?.addEventListener('keydown', function (e) {
 // Form submit
 chatForm?.addEventListener('submit', async function (e) {
     e.preventDefault();
-    const message = chatInput.value.trim();
+    const message      = chatInput.value.trim();
+    const connectionId = connectionIdEl?.value;
     if (!message || !connectionId) return;
 
     appendUserMessage(message);
     chatInput.value = '';
     chatInput.style.height = 'auto';
-
     setLoading(true);
 
     try {
@@ -219,7 +262,11 @@ chatForm?.addEventListener('submit', async function (e) {
                 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ connection_id: connectionId, message }),
+            body: JSON.stringify({
+                connection_id: connectionId,
+                message,
+                session_id: sessionIdEl?.value || null,
+            }),
         });
 
         const json = await res.json();
@@ -229,6 +276,17 @@ chatForm?.addEventListener('submit', async function (e) {
         } else {
             const d = json.data;
             appendAiMessage(d.ai_response, d.tool_used, d.response_time_ms);
+
+            // If new session was created, update URL & hidden field silently
+            if (json.session_id && !sessionIdEl.value) {
+                sessionIdEl.value = json.session_id;
+                const url = new URL(window.location);
+                url.searchParams.set('session', json.session_id);
+                window.history.replaceState({}, '', url);
+
+                // Add to sidebar dynamically
+                addSessionToSidebar(json.session_id, message);
+            }
         }
     } catch (err) {
         appendAiMessage('❌ Impossible de contacter le serveur. Vérifiez votre connexion.', null, null);
@@ -261,9 +319,7 @@ function setLoading(isLoading) {
 }
 
 function scrollToBottom() {
-    if (chatMessages) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
+    if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 function appendUserMessage(text) {
@@ -276,9 +332,14 @@ function appendUserMessage(text) {
             </div>
             <div class="text-xs text-slate-600 text-right mt-1">${time}</div>
         </div>
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-1">U</div>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-1">${userInitial}</div>
     </div>`;
     typingIndicator.insertAdjacentHTML('beforebegin', html);
+
+    // Hide the welcome screen
+    const welcome = chatMessages.querySelector('.h-full.flex.flex-col.items-center');
+    if (welcome) welcome.remove();
+
     scrollToBottom();
 }
 
@@ -304,6 +365,48 @@ function appendAiMessage(text, tool, timeMs) {
     </div>`;
     typingIndicator.insertAdjacentHTML('beforebegin', html);
     scrollToBottom();
+}
+
+function addSessionToSidebar(sessionId, title) {
+    const container = document.querySelector('.px-2.space-y-0\\.5');
+    if (!container) return;
+    const shortTitle = title.length > 47 ? title.substring(0, 47) + '...' : title;
+    const html = `
+    <div class="group flex items-center gap-1 rounded-lg hover:bg-slate-800/50 transition-colors bg-indigo-500/10 border border-indigo-500/20">
+        <a href="?session=${sessionId}" class="flex-1 min-w-0 px-2 py-2">
+            <p class="text-xs text-indigo-300 truncate">${escapeHtml(shortTitle)}</p>
+            <p class="text-[10px] text-slate-600 mt-0.5">À l'instant</p>
+        </a>
+        <button onclick="deleteSession(${sessionId}, this)"
+            class="opacity-0 group-hover:opacity-100 mr-1.5 p-1 rounded text-slate-600 hover:text-red-400 hover:bg-red-500/10 transition-all">
+            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>`;
+    container.insertAdjacentHTML('afterbegin', html);
+}
+
+async function deleteSession(sessionId, btn) {
+    if (!confirm('Supprimer cette conversation ?')) return;
+    try {
+        const res = await fetch(`/chat/sessions/${sessionId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                'Accept': 'application/json',
+            },
+        });
+        if (res.ok) {
+            btn.closest('.group').remove();
+            // If deleting current session, go to new chat
+            if (sessionIdEl.value == sessionId) {
+                window.location.href = '{{ route('chat.index') }}';
+            }
+        }
+    } catch (e) {
+        alert('Erreur lors de la suppression.');
+    }
 }
 
 function escapeHtml(unsafe) {

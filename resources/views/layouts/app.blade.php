@@ -13,6 +13,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- AlpineJS -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -90,7 +93,7 @@
     <div class="relative z-10 flex h-full min-h-screen">
 
         <!-- Sidebar -->
-        <aside class="w-64 shrink-0 glass border-r border-slate-800/50 flex flex-col">
+        <aside class="w-64 shrink-0 glass border-r border-slate-800/50 flex flex-col overflow-y-auto">
 
             <!-- Logo -->
             <div class="p-6 border-b border-slate-800/50">
@@ -108,8 +111,9 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 p-4 space-y-1">
+            <nav class="shrink-0 p-4 space-y-1">
                 <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-3">Navigation</p>
+                @if(auth()->user()->isAdmin())
                 <a href="{{ route('tools.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800/50 {{ request()->routeIs('tools.*') ? 'nav-item-active text-indigo-300' : 'text-slate-400 hover:text-slate-100' }}">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -118,6 +122,13 @@
                     Outils API
                 </a>
 
+                <a href="{{ route('tool-relations.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800/50 {{ request()->routeIs('tool-relations.*') ? 'nav-item-active text-indigo-300' : 'text-slate-400 hover:text-slate-100' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0 12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                    </svg>
+                    Modélisation ERD
+                </a>
                 <a href="{{ route('connections.index') }}"
                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800/50 {{ request()->routeIs('connections.*') ? 'nav-item-active text-indigo-300' : 'text-slate-400 hover:text-slate-100' }}">
                     <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -137,9 +148,29 @@
                     <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">{{ ucfirst($activeAi->provider) }}</span>
                     @endif
                 </a>
+
+                <a href="{{ route('ai-rules.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800/50 {{ request()->routeIs('ai-rules.*') ? 'nav-item-active text-indigo-300' : 'text-slate-400 hover:text-slate-100' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                    Directives IA
+                </a>
+
+                <a href="{{ route('users.index') }}"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-slate-800/50 {{ request()->routeIs('users.*') ? 'nav-item-active text-indigo-300' : 'text-slate-400 hover:text-slate-100' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                    Utilisateurs
+                </a>
+                @endif
             </nav>
 
-            <!-- Ollama Status -->
+            <!-- Sidebar Extra (per page, e.g. chat history) -->
+            @yield('sidebar-extra')
+
+            <!-- AI Engine Status -->
             <div class="p-4 border-t border-slate-800/50">
                 @php $activeAiEngine = App\Models\AiProviderSetting::activeCloud(); @endphp
                 @if($activeAiEngine)
@@ -171,8 +202,33 @@
                     <h1 class="font-semibold text-slate-100">@yield('page-title', 'Dashboard')</h1>
                     <p class="text-xs text-slate-500 mt-0.5">@yield('page-subtitle', '')</p>
                 </div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     @yield('header-actions')
+                    
+                    <!-- Profile Menu -->
+                    <div class="relative group" x-data="{ open: false }" @click.outside="open = false">
+                        <button @click="open = !open" class="flex items-center gap-2 hover:bg-slate-800/50 p-2 rounded-xl transition-colors">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow-lg">
+                                {{ substr(auth()->user()->name, 0, 1) }}
+                            </div>
+                            <div class="text-left hidden sm:block">
+                                <p class="text-xs font-semibold text-slate-200 leading-none">{{ auth()->user()->prenom }} {{ auth()->user()->name }}</p>
+                                <p class="text-[10px] text-slate-500 mt-0.5">{{ auth()->user()->matricule }}</p>
+                            </div>
+                            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        
+                        <!-- Dropdown -->
+                        <div x-show="open" style="display: none; position: relative; z-index: 999;" class="absolute right-0 mt-2 w-48 rounded-xl bg-slate-800 border border-slate-700 shadow-xl overflow-hidden">
+                            <form action="{{ route('logout') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-slate-700/50 flex items-center gap-2 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                    Se déconnecter
+                                </button>
+                            </form>
+                        </div>
+                    </div>
                 </div>
             </header>
 

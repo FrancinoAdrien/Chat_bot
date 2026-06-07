@@ -15,7 +15,8 @@ class ChatRequest extends FormRequest
     {
         return [
             'connection_id' => ['required', 'exists:api_connections,id'],
-            'message'       => ['required', 'string', 'max:2000'],
+            'message'       => ['required', 'string', 'max:5000'],
+            'session_id'    => ['nullable', 'integer'],
         ];
     }
 }

@@ -2,7 +2,7 @@
 
 @section('title', 'Gestion des Outils')
 @section('page-title', 'Outils du ChatBot')
-@section('page-subtitle', 'Configurez les requêtes API que l\'IA peut utiliser.')
+@section('page-subtitle', 'Configurez les sources de données (API ou Excel) que l\'IA peut utiliser.')
 
 @section('header-actions')
     <a href="{{ route('tools.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-500 transition-all font-medium">
@@ -12,28 +12,28 @@
 
 @section('content')
 <div class="p-6">
-    @if($connections->isEmpty())
+    @if($connections->isEmpty() && $tools->where('type','api')->count() > 0)
     <div class="glass rounded-xl p-6 border border-amber-500/30 bg-amber-500/5 mb-6 flex items-start gap-4">
         <svg class="w-6 h-6 text-amber-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
         <div>
             <h4 class="text-amber-300 font-medium mb-1">Aucune connexion API disponible</h4>
-            <p class="text-amber-200/70 text-sm mb-3">Vous devez d'abord créer une connexion pour pouvoir y associer des outils.</p>
+            <p class="text-amber-200/70 text-sm mb-3">Vous devez d'abord créer une connexion pour ajouter des outils API. Vous pouvez toujours ajouter des outils Excel.</p>
             <a href="{{ route('connections.index') }}" class="text-amber-400 text-sm font-medium hover:text-amber-300 transition-colors">
                 Créer une connexion →
             </a>
         </div>
     </div>
-    @else
+    @endif
     <div class="glass rounded-2xl overflow-hidden border border-slate-800/50">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-300">
                 <thead class="bg-slate-900/50 border-b border-slate-800/50">
                     <tr>
                         <th class="px-6 py-4">Outil</th>
-                        <th class="px-6 py-4">Connexion API</th>
-                        <th class="px-6 py-4">Endpoint</th>
+                        <th class="px-6 py-4">Type / Source</th>
+                        <th class="px-6 py-4">Endpoint / Feuille</th>
                         <th class="px-6 py-4">Mots-clés</th>
                         <th class="px-6 py-4">Statut</th>
                         <th class="px-6 py-4 text-right">Actions</th>
@@ -47,12 +47,22 @@
                                 <p class="text-xs text-slate-500 mt-0.5">{{ $tool->name }}</p>
                             </td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
-                                    {{ $tool->apiConnection->name }}
-                                </span>
+                                @if($tool->type === 'excel')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs">
+                                        📊 Fichier Excel
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs">
+                                        🌐 {{ $tool->apiConnection?->name ?? '—' }}
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 font-mono text-xs text-slate-400">
-                                <span class="text-indigo-400 font-semibold">{{ $tool->method }}</span> {{ $tool->endpoint }}
+                                @if($tool->type === 'excel')
+                                    <span class="text-emerald-400 font-semibold">SHEET</span> {{ $tool->sheet_name }}
+                                @else
+                                    <span class="text-indigo-400 font-semibold">{{ $tool->method }}</span> {{ $tool->endpoint }}
+                                @endif
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex flex-wrap gap-1 max-w-xs">
@@ -73,7 +83,10 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right space-x-2">
-                                <button onclick="testTool({{ $tool->id }}, '{{ $tool->name }}')" class="text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium mr-2">Voir</button>
+                                <button onclick="testTool({{ $tool->id }}, '{{ $tool->label }}')"
+                                        class="text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-medium mr-2">
+                                    Voir
+                                </button>
                                 <a href="{{ route('tools.edit', $tool) }}" class="text-indigo-400 hover:text-indigo-300 transition-colors text-sm font-medium">Modifier</a>
                                 <form action="{{ route('tools.destroy', $tool) }}" method="POST" class="inline-block" onsubmit="return confirm('Supprimer cet outil ?')">
                                     @csrf
@@ -98,7 +111,7 @@
         </div>
         @endif
     </div>
-    @endif
+
 
     <!-- Modale Test API -->
     <div id="testModal" class="fixed inset-0 z-50 hidden bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">

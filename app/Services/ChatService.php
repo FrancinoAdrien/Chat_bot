@@ -7,8 +7,8 @@ use App\AI\PromptBuilder;
 use App\AI\ToolManager;
 use App\Models\AiProviderSetting;
 use App\Models\ApiConnection;
+use App\Models\ChatSession;
 use App\Models\Conversation;
-use App\Services\GroqService;
 use Illuminate\Support\Facades\Log;
 
 class ChatService
@@ -21,22 +21,63 @@ class ChatService
         private readonly GroqService $groqService
     ) {}
 
-    public function handle(ApiConnection $connection, string $userMessage): Conversation
+    /**
+     * Handle a chat message. Creates or reuses a ChatSession.
+     * Returns an array with the Conversation and the ChatSession.
+     */
+    public function handle(ApiConnection $connection, string $userMessage, ?int $sessionId = null): array
     {
         $startTime = microtime(true);
         $toolUsed  = null;
         $toolData  = null;
+        $userId    = auth()->id();
 
-        // 1. Detect Intent
-        $toolUsed = $this->intentDetector->detect($userMessage, $connection);
+        // 1. Resolve or create ChatSession
+        if ($sessionId) {
+            $session = ChatSession::where('id', $sessionId)
+                ->where('user_id', $userId)
+                ->first();
+        }
 
-        // 2. Execute Tool if needed
+        if (empty($session)) {
+            $session = ChatSession::create([
+                'user_id'           => $userId,
+                'api_connection_id' => $connection->id,
+                'title'             => ChatSession::titleFromMessage($userMessage),
+                'last_message_at'   => now(),
+            ]);
+        } else {
+            $session->update(['last_message_at' => now()]);
+        }
+
+        // Fetch local session history
+        $history = [];
+        if (!empty($session) && $session->exists) {
+            $history = $session->conversations()->orderBy('created_at', 'asc')->get();
+        }
+
+        // 2. Fetch Long-term Memory (Global History / RAG)
+        $globalHistory = collect();
+        if (strlen($userMessage) > 3) {
+            $globalHistory = Conversation::where('user_id', $userId)
+                ->where('chat_session_id', '!=', $session->id ?? 0) // Exclude current session
+                ->whereRaw("MATCH(user_message, ai_response) AGAINST(? IN NATURAL LANGUAGE MODE)", [$userMessage])
+                ->limit(3)
+                ->get();
+        }
+
+        // 3. Fetch Admin Rules (AI Rules) for the user
+        $aiRules = \App\Models\AiRule::getRulesForUser(auth()->user());
+
+        // 4. Detect Intent
+        $toolUsed = $this->intentDetector->detect($userMessage, $connection, $session);
+
+        // 5. Execute Tool if needed
         if ($toolUsed) {
             try {
                 $toolData = $this->toolManager->execute($toolUsed, $connection);
-                $prompt = $this->promptBuilder->buildWithData($userMessage, $toolUsed, $toolData);
+                $prompt = $this->promptBuilder->buildWithData($userMessage, $toolUsed, $toolData, $history, $globalHistory, $aiRules);
             } catch (\Exception $e) {
-                // If API fails (auth error, timeout, etc.), catch it and ask AI to explain it gracefully
                 Log::warning('[ChatService] Tool execution error', [
                     'message'    => $e->getMessage(),
                     'tool'       => $toolUsed,
@@ -45,11 +86,10 @@ class ChatService
                 $prompt = $this->promptBuilder->buildErrorResponse($userMessage, $e->getMessage());
             }
         } else {
-            // General conversation
-            $prompt = $this->promptBuilder->buildGeneral($userMessage);
+            $prompt = $this->promptBuilder->buildGeneral($userMessage, $history, $globalHistory, $aiRules);
         }
 
-        // 3. Get AI Response — use Groq if available, else Ollama
+        // 4. Get AI Response — use Groq if available, else Ollama
         try {
             $cloudProvider = AiProviderSetting::activeCloud();
 
@@ -68,10 +108,12 @@ class ChatService
             $aiResponse = "Erreur de connexion au moteur IA : " . $e->getMessage();
         }
 
-        // 4. Record Conversation
+        // 5. Record Conversation
         $durationMs = (int) round((microtime(true) - $startTime) * 1000);
 
-        return Conversation::create([
+        $conversation = Conversation::create([
+            'chat_session_id'   => $session->id,
+            'user_id'           => $userId,
             'api_connection_id' => $connection->id,
             'user_message'      => $userMessage,
             'ai_response'       => $aiResponse,
@@ -79,5 +121,10 @@ class ChatService
             'tool_data'         => $toolData,
             'response_time_ms'  => $durationMs,
         ]);
+
+        return [
+            'conversation' => $conversation,
+            'session'      => $session,
+        ];
     }
 }

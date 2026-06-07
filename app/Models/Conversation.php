@@ -11,6 +11,8 @@ class Conversation extends Model
     use HasFactory;
 
     protected $fillable = [
+        'chat_session_id',
+        'user_id',
         'api_connection_id',
         'user_message',
         'ai_response',
@@ -22,6 +24,16 @@ class Conversation extends Model
     protected $casts = [
         'tool_data' => 'array',
     ];
+
+    public function chatSession(): BelongsTo
+    {
+        return $this->belongsTo(ChatSession::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function apiConnection(): BelongsTo
     {
