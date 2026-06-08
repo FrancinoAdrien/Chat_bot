@@ -5,23 +5,9 @@
 @section('page-subtitle', 'Liez vos outils API pour que l\'IA puisse croiser les données automatiquement.')
 
 @section('header-actions')
-    @if($connections->isNotEmpty())
-    <div class="flex items-center gap-3">
-        <div class="relative">
-            <select id="connection-selector" onchange="window.location.href='?connection_id='+this.value"
-                class="appearance-none bg-slate-900/50 border border-slate-700/50 text-slate-200 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-4 pr-10 py-2.5 transition-all hover:bg-slate-800/80 cursor-pointer">
-                @foreach($connections as $conn)
-                    <option value="{{ $conn->id }}" {{ $selectedConnection?->id === $conn->id ? 'selected' : '' }}>
-                        {{ $conn->name }}
-                    </option>
-                @endforeach
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-        </div>
-    </div>
-    @endif
+    <a href="{{ route('tools.create') }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-500 transition-all font-medium">
+        + Nouvel outil
+    </a>
 @endsection
 
 @section('content')
@@ -54,9 +40,9 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" />
                 </svg>
             </div>
-            <p class="text-slate-400 text-sm">Aucun outil API actif pour cette connexion.</p>
+            <p class="text-slate-400 text-sm">Aucun outil configuré.</p>
             <a href="{{ route('tools.create') }}" class="text-indigo-400 text-xs mt-2 inline-block hover:text-indigo-300">
-                + Créer un outil API
+                + Créer un outil
             </a>
         </div>
     @else
@@ -117,7 +103,6 @@
 <script>
 const TOOLS = @json($tools);
 const EXISTING_RELATIONS = @json($relations);
-const CONNECTION_ID = {{ $selectedConnection?->id ?? 'null' }};
 const CSRF = document.querySelector('meta[name=csrf-token]').content;
 
 // State
@@ -206,7 +191,7 @@ function renderEntities() {
                      onmousedown="startDrag(event, ${toolId})">
                     <div class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75 0V5.625m0 0A1.125 1.125 0 0020.625 4.5h-1.5B18 4.5h-7.5A1.125 1.125 0 009.375 5.625m11.25 0v3.375" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                         <span class="text-xs font-bold text-slate-100 uppercase tracking-wider">${schema.label}</span>
                     </div>
@@ -272,7 +257,7 @@ async function createRelation(primaryToolId, primaryField, foreignToolId, foreig
                 'Accept': 'application/json',
             },
             body: JSON.stringify({
-                api_connection_id: CONNECTION_ID,
+                api_connection_id: null,
                 primary_tool_id: primaryToolId,
                 primary_field: primaryField,
                 foreign_tool_id: foreignToolId,

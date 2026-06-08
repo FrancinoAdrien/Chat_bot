@@ -24,40 +24,10 @@ class ToolRelationController extends Controller
      */
     public function index(Request $request): View
     {
-        $connections = ApiConnection::active()->orderBy('name')->get();
+        $tools = Tool::active()->get();
+        $relations = ToolRelation::with(['primaryTool', 'foreignTool'])->get();
 
-        $selectedConnectionId = $request->get('connection_id', $connections->first()?->id);
-        $selectedConnection   = $connections->firstWhere('id', $selectedConnectionId);
-
-        $tools = [];
-        $relations = [];
-
-        if ($selectedConnection) {
-            // Include API tools for this connection AND all Excel tools
-            $tools = Tool::active()
-                ->where(function($q) use ($selectedConnection) {
-                    $q->where('api_connection_id', $selectedConnection->id)
-                      ->orWhere('type', 'excel');
-                })
-                ->get();
-
-            // Include relations for this connection AND cross-tool relations involving Excel
-            $toolIds = $tools->pluck('id');
-            $relations = ToolRelation::where(function($q) use ($selectedConnection, $toolIds) {
-                    $q->where('api_connection_id', $selectedConnection->id)
-                      ->orWhereIn('primary_tool_id', $toolIds)
-                      ->orWhereIn('foreign_tool_id', $toolIds);
-                })
-                ->with(['primaryTool', 'foreignTool'])
-                ->get();
-        }
-
-        return view('tools.relations', compact(
-            'connections',
-            'selectedConnection',
-            'tools',
-            'relations'
-        ));
+        return view('tools.relations', compact('tools', 'relations'));
     }
 
     /**
@@ -86,8 +56,8 @@ class ToolRelationController extends Controller
                     $cellIterator = $row->getCellIterator();
                     $cellIterator->setIterateOnlyExistingCells(false);
                     foreach ($cellIterator as $cell) {
-                        $val = $cell->getValue();
-                        if ($val !== null && $val !== '') {
+                        $val = trim((string) $cell->getFormattedValue());
+                        if ($val !== '') {
                             $firstRow[] = $val;
                         }
                     }
