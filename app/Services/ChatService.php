@@ -18,7 +18,9 @@ class ChatService
         private readonly ToolManager $toolManager,
         private readonly PromptBuilder $promptBuilder,
         private readonly OllamaService $ollamaService,
-        private readonly GroqService $groqService
+        private readonly GroqService $groqService,
+        private readonly OpenAiService $openAiService,
+        private readonly GeminiService $geminiService
     ) {}
 
     /**
@@ -89,17 +91,17 @@ class ChatService
             $prompt = $this->promptBuilder->buildGeneral($userMessage, $history, $globalHistory, $aiRules);
         }
 
-        // 4. Get AI Response — use Groq if available, else Ollama
+        // 4. Get AI Response — route to correct provider
         try {
             $cloudProvider = AiProviderSetting::activeCloud();
 
             if ($cloudProvider) {
                 Log::info('[ChatService] Using cloud provider', ['provider' => $cloudProvider->provider]);
-                $aiResponse = $this->groqService->generate(
-                    $prompt,
-                    $cloudProvider->api_key,
-                    $cloudProvider->model
-                );
+                $aiResponse = match($cloudProvider->provider) {
+                    'openai' => $this->openAiService->generate($prompt, $cloudProvider->api_key, $cloudProvider->model),
+                    'gemini' => $this->geminiService->generate($prompt, $cloudProvider->api_key, $cloudProvider->model),
+                    default  => $this->groqService->generate($prompt, $cloudProvider->api_key, $cloudProvider->model),
+                };
             } else {
                 Log::info('[ChatService] Using Ollama (local)');
                 $aiResponse = $this->ollamaService->generate($prompt);

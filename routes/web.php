@@ -55,6 +55,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/',                                      [AiProviderController::class, 'index'])->name('index');
             Route::post('/',                                     [AiProviderController::class, 'store'])->name('store');
             Route::post('/verify',                               [AiProviderController::class, 'verify'])->name('verify');
+            Route::post('/{aiProviderSetting}/activate',         [AiProviderController::class, 'activate'])->name('activate');
             Route::post('/{aiProviderSetting}/deactivate',       [AiProviderController::class, 'deactivate'])->name('deactivate');
             Route::delete('/{aiProviderSetting}',                [AiProviderController::class, 'destroy'])->name('destroy');
         });

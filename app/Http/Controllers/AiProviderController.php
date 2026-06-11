@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AiProviderSetting;
+use App\Services\GeminiService;
 use App\Services\GroqService;
+use App\Services\OpenAiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,18 +13,23 @@ use Illuminate\View\View;
 
 class AiProviderController extends Controller
 {
-    public function __construct(private readonly GroqService $groqService) {}
+    public function __construct(
+        private readonly GroqService   $groqService,
+        private readonly OpenAiService $openAiService,
+        private readonly GeminiService $geminiService,
+    ) {}
 
     public function index(): View
     {
-        $settings = AiProviderSetting::orderBy('is_active', 'desc')->get();
+        $settings       = AiProviderSetting::orderBy('is_active', 'desc')->orderBy('provider')->get();
         $activeProvider = AiProviderSetting::activeCloud();
 
         return view('ai-provider.index', compact('settings', 'activeProvider'));
     }
 
     /**
-     * Save & verify a provider key.
+     * Save a new provider key (without auto-activating if another is already active).
+     * If no other provider is active, this one will become active automatically.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -36,33 +43,43 @@ class AiProviderController extends Controller
 
         // Verify the key
         try {
-            if ($validated['provider'] === 'groq') {
-                $this->groqService->verify($validated['api_key'], $model);
-            }
-            // (other providers would be verified here too)
+            $this->verifyProvider($validated['provider'], $validated['api_key'], $model);
         } catch (\Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', '❌ Clé invalide : ' . $e->getMessage());
+            return back()->withInput()->with('error', '❌ Clé invalide : ' . $e->getMessage());
         }
 
-        // Deactivate all others, then save this one
-        AiProviderSetting::where('provider', $validated['provider'])->delete();
+        $hasActive = AiProviderSetting::where('is_active', true)->exists();
 
-        AiProviderSetting::create([
-            'provider'    => $validated['provider'],
-            'api_key'     => $validated['api_key'],
-            'model'       => $model,
-            'is_active'   => true,
-            'verified_at' => now(),
-        ]);
+        // Update or create an entry for this provider
+        AiProviderSetting::updateOrCreate(
+            ['provider' => $validated['provider']],
+            [
+                'api_key'     => $validated['api_key'],
+                'model'       => $model,
+                'is_active'   => !$hasActive, // activate only if nothing else is active
+                'verified_at' => now(),
+            ]
+        );
 
-        // Disable other providers
-        AiProviderSetting::where('provider', '!=', $validated['provider'])
-            ->update(['is_active' => false]);
+        $activatedMsg = !$hasActive ? ' et activé' : '. Cliquez sur "Activer" dans la liste pour basculer vers ce fournisseur';
 
         return redirect()->route('ai-provider.index')
-            ->with('success', '✅ Clé vérifiée et activée ! Le ChatBot utilise maintenant ' . ucfirst($validated['provider']) . '.');
+            ->with('success', '✅ Clé vérifiée' . $activatedMsg . '.');
+    }
+
+    /**
+     * Activate a saved provider (deactivates all others).
+     */
+    public function activate(AiProviderSetting $aiProviderSetting): RedirectResponse
+    {
+        // Deactivate all
+        AiProviderSetting::query()->update(['is_active' => false]);
+
+        // Activate the selected one
+        $aiProviderSetting->update(['is_active' => true]);
+
+        return redirect()->route('ai-provider.index')
+            ->with('success', '✅ ' . ucfirst($aiProviderSetting->provider) . ' est maintenant le moteur IA actif.');
     }
 
     /**
@@ -101,12 +118,22 @@ class AiProviderController extends Controller
         $model = $request->input('model') ?: AiProviderSetting::defaultModel($request->input('provider'));
 
         try {
-            if ($request->input('provider') === 'groq') {
-                $this->groqService->verify($request->input('api_key'), $model);
-            }
+            $this->verifyProvider($request->input('provider'), $request->input('api_key'), $model);
             return response()->json(['success' => true, 'message' => '✅ Clé valide !']);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
         }
+    }
+
+    /**
+     * Internally route verification to the correct service.
+     */
+    private function verifyProvider(string $provider, string $apiKey, string $model): void
+    {
+        match($provider) {
+            'openai' => $this->openAiService->verify($apiKey, $model),
+            'gemini' => $this->geminiService->verify($apiKey, $model),
+            default  => $this->groqService->verify($apiKey, $model),
+        };
     }
 }
