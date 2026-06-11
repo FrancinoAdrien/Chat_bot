@@ -1,0 +1,219 @@
+/* ═══════════════════════════════════════════════════════════════════
+   UTILITIES — Remplace les utilitaires Tailwind
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Icônes SVG ──────────────────────────────────────────────── */
+
+.icon-xs { width: 0.75rem; height: 0.75rem; flex-shrink: 0; }
+.icon-sm { width: 1rem; height: 1rem; flex-shrink: 0; }
+.icon-md { width: 1.25rem; height: 1.25rem; flex-shrink: 0; }
+.icon-lg { width: 2rem; height: 2rem; flex-shrink: 0; }
+
+/* ─── Layout ────────────────────────────────────────────────── */
+
+.inset-0 { inset: 0; }
+.z-0 { z-index: 0; }
+.z-10 { z-index: 10; }
+.z-50 { z-index: 50; }
+.shrink-0 { flex-shrink: 0; }
+.flex-1 { flex: 1 1 0%; }
+.min-w-0 { min-width: 0; }
+.max-w-sm { max-width: 24rem; }
+.max-w-md { max-width: 28rem; }
+
+/* ─── Gap (espacement flex/grid) ──────────────────────────────── */
+
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+/* ─── Espacement ──────────────────────────────────────────────── */
+
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.pt-2 { padding-top: 0.5rem; }
+.pt-4 { padding-top: 1rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-5 { margin-bottom: 1.25rem; }
+.mt-1 { margin-top: 0.25rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mx-4 { margin-left: 1rem; margin-right: 1rem; }
+.ml-auto { margin-left: auto; }
+.ml-3 { margin-left: 0.75rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+/* ─── Typographie ─────────────────────────────────────────────── */
+
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.leading-relaxed { line-height: 1.625; }
+.uppercase { text-transform: uppercase; }
+.italic { font-style: italic; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+/* ─── Couleurs texte ─────────────────────────────────────────── */
+
+.text-white { color: #fff; }
+.text-accent { color: var(--color-accent-primary); }
+.text-accent-light { color: var(--color-accent-light); }
+.text-success { color: var(--color-success-light); }
+.text-danger { color: var(--color-danger-light); }
+.text-warning { color: var(--color-warning-light); }
+.text-muted { color: var(--color-text-muted); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-primary { color: var(--color-text-primary); }
+
+/* ─── Couleurs fond ───────────────────────────────────────────── */
+
+.bg-success { background-color: var(--color-success-light); }
+.bg-danger { background-color: var(--color-danger); }
+.bg-muted { background-color: var(--color-text-muted); }
+
+/* ─── Bordures & radius ───────────────────────────────────────── */
+
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-2xl { border-radius: var(--radius-2xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ─── Grille ──────────────────────────────────────────────────── */
+
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-gap-4 { gap: 1rem; }
+.grid-gap-6 { gap: 1.5rem; }
+
+@media (min-width: 768px) {
+  .md-grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .md-flex-row { flex-direction: row; }
+  .md-items-center { align-items: center; }
+  .md-justify-between { justify-content: space-between; }
+}
+
+/* ─── Responsive visibility ───────────────────────────────────── */
+
+@media (max-width: 639px) {
+  .hidden-mobile { display: none !important; }
+}
+
+@media (min-width: 640px) {
+  .hidden-desktop { display: none !important; }
+}
+
+/* ─── Ambient background ──────────────────────────────────────── */
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+}
+
+.ambient-orb--tr { top: -10rem; right: -10rem; width: 24rem; height: 24rem; }
+.ambient-orb--cl { top: 50%; left: -10rem; width: 24rem; height: 24rem; }
+.ambient-orb--br { bottom: -10rem; right: 33%; width: 20rem; height: 20rem; }
+
+/* ─── Avatars & chips ─────────────────────────────────────────── */
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-secondary));
+  color: #fff;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatar--sm { width: 2rem; height: 2rem; font-size: 0.6875rem; }
+.avatar--md { width: 2.25rem; height: 2.25rem; font-size: 0.75rem; }
+
+.avatar-chip {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-accent-primary) 25%, transparent);
+  color: var(--color-accent-primary);
+}
+
+/* ─── Status row ──────────────────────────────────────────────── */
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ─── Inline / formulaires ────────────────────────────────────── */
+
+.inline { display: inline; }
+.inline-form { display: inline; }
+
+/* ─── Select wrapper ──────────────────────────────────────────── */
+
+.select-wrapper {
+  position: relative;
+}
+
+.select-wrapper__chevron {
+  pointer-events: none;
+  position: absolute;
+  inset-block: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  padding-inline: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.form-control--inline {
+  width: auto;
+  min-width: 12rem;
+  padding-right: 2.5rem;
+  appearance: none;
+  cursor: pointer;
+}
+
+/* ─── Scroll ──────────────────────────────────────────────────── */
+
+.scroll-smooth { scroll-behavior: smooth; }
+
+/* ─── Divider ─────────────────────────────────────────────────── */
+
+.divider-top {
+  border-top: 1px solid var(--color-border-light);
+}

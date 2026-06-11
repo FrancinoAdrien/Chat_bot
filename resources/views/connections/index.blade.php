@@ -5,9 +5,8 @@
 @section('page-subtitle', 'Gérez les APIs externes auxquelles le chatbot a accès')
 
 @section('header-actions')
-<button onclick="openAddModal()"
-   class="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-sm font-medium hover:from-indigo-500 hover:to-purple-600 transition-all shadow-lg shadow-indigo-500/30 hover:scale-105 active:scale-95">
-    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<button onclick="openAddModal()" class="btn btn-primary btn-sm hover-lift">
+    <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
     </svg>
     Nouvelle Connexion
@@ -15,110 +14,103 @@
 @endsection
 
 @section('content')
-<div class="p-6 space-y-6">
+<div class="page">
 
-    {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="glass rounded-xl p-4 border border-slate-800/50">
-            <div class="text-2xl font-bold text-indigo-400">{{ $connections->count() }}</div>
-            <div class="text-xs text-slate-500 mt-1">Connexions totales</div>
+    <form method="GET" class="filter-bar panel panel__body">
+        <div>
+            <label class="form-label">Recherche de connexion</label>
+            <input type="search" name="search" value="{{ $search ?? '' }}" placeholder="Nom de la connexion..." class="form-control form-control--search" />
         </div>
-        <div class="glass rounded-xl p-4 border border-slate-800/50">
-            <div class="text-2xl font-bold text-emerald-400">{{ $connections->where('is_authenticated', true)->count() }}</div>
-            <div class="text-xs text-slate-500 mt-1">Authentifiées</div>
+        <p class="filter-bar__hint">Filtrer par nom pour retrouver rapidement une connexion API.</p>
+    </form>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card__value text-accent">{{ $connections->count() }}</div>
+            <div class="stat-card__label">Connexions totales</div>
         </div>
-        <div class="glass rounded-xl p-4 border border-slate-800/50">
-            <div class="text-2xl font-bold text-red-400">{{ $connections->where('is_authenticated', false)->count() }}</div>
-            <div class="text-xs text-slate-500 mt-1">Non authentifiées</div>
+        <div class="stat-card">
+            <div class="stat-card__value text-success">{{ $connections->where('is_authenticated', true)->count() }}</div>
+            <div class="stat-card__label">Authentifiées</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card__value text-danger">{{ $connections->where('is_authenticated', false)->count() }}</div>
+            <div class="stat-card__label">Non authentifiées</div>
         </div>
     </div>
 
-    {{-- Connections Table --}}
-    <div class="glass rounded-2xl overflow-hidden border border-slate-800/50">
+    <div class="panel data-table-wrap">
 
         @if($connections->isEmpty())
-        <div class="flex flex-col items-center justify-center py-16 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-slate-800/50 border border-slate-700 flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <div class="empty-state">
+            <div class="empty-state__icon">
+                <svg class="icon-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
                 </svg>
             </div>
-            <p class="text-slate-400 mb-2">Aucune connexion API configurée.</p>
-            <button onclick="openAddModal()" class="text-indigo-400 text-sm hover:text-indigo-300">+ Ajouter la première connexion</button>
+            <p class="empty-state__text">Aucune connexion API configurée.</p>
+            <button onclick="openAddModal()" class="link-action">+ Ajouter la première connexion</button>
         </div>
         @else
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-300">
-                <thead class="bg-slate-900/50 text-slate-400 text-xs uppercase font-semibold">
+            <table class="data-table">
+                <thead>
                     <tr>
-                        <th class="px-6 py-4">Connexion</th>
-                        <th class="px-6 py-4">URL de base</th>
-                        <th class="px-6 py-4">Authentification</th>
-                        <th class="px-6 py-4">Token</th>
-                        <th class="px-6 py-4 text-right">Actions</th>
+                        <th>Connexion</th>
+                        <th>URL de base</th>
+                        <th>Authentification</th>
+                        <th>Token</th>
+                        <th class="data-table__actions">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-800/50">
+                <tbody>
                     @foreach($connections as $conn)
-                    <tr class="hover:bg-slate-800/20 transition-colors" id="row-{{ $conn->id }}">
-                        {{-- Name --}}
-                        <td class="px-6 py-4">
+                    <tr id="row-{{ $conn->id }}">
+                        <td>
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-600/30 to-purple-700/30 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-300">
-                                    {{ strtoupper(substr($conn->name, 0, 2)) }}
-                                </div>
+                                <div class="avatar-chip">{{ strtoupper(substr($conn->name, 0, 2)) }}</div>
                                 <div>
-                                    <div class="font-medium text-slate-200">{{ $conn->name }}</div>
+                                    <div class="data-table__primary">{{ $conn->name }}</div>
                                     @if($conn->description)
-                                    <div class="text-xs text-slate-500">{{ Str::limit($conn->description, 40) }}</div>
+                                    <div class="data-table__secondary">{{ Str::limit($conn->description, 40) }}</div>
                                     @endif
                                 </div>
                             </div>
                         </td>
 
-                        {{-- URL --}}
-                        <td class="px-6 py-4">
-                            <div class="font-mono text-xs text-slate-400">{{ $conn->base_url }}</div>
+                        <td>
+                            <div class="font-mono text-xs text-secondary">{{ $conn->base_url }}</div>
                             @if($conn->login_url)
-                            <div class="text-[10px] text-slate-600 mt-0.5">Login: {{ $conn->login_url }}</div>
+                            <div class="data-table__secondary">Login: {{ $conn->login_url }}</div>
                             @endif
                         </td>
 
-                        {{-- Auth Status --}}
-                        <td class="px-6 py-4">
+                        <td>
                             @if($conn->is_authenticated)
                             <div class="flex flex-col gap-1">
-                                <span class="inline-flex items-center gap-1.5 text-xs text-emerald-400">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                    Authentifié
-                                </span>
+                                <span class="badge badge--success"><span class="badge__dot"></span> Authentifié</span>
                                 @if($conn->authenticated_at)
-                                <span class="text-[10px] text-slate-600">{{ $conn->authenticated_at->diffForHumans() }}</span>
+                                <span class="data-table__secondary">{{ $conn->authenticated_at->diffForHumans() }}</span>
                                 @endif
                             </div>
                             @else
-                            <span class="inline-flex items-center gap-1.5 text-xs text-red-400">
-                                <span class="w-2 h-2 rounded-full bg-red-400"></span>
-                                Non authentifié
-                            </span>
+                            <span class="badge badge--danger"><span class="badge__dot"></span> Non authentifié</span>
                             @endif
                         </td>
 
-                        {{-- Token --}}
-                        <td class="px-6 py-4">
-                            <span class="font-mono text-xs text-slate-500" id="token-display-{{ $conn->id }}">
+                        <td>
+                            <span class="font-mono text-xs text-muted" id="token-display-{{ $conn->id }}">
                                 {{ $conn->masked_token ?? '—' }}
                             </span>
                         </td>
 
                         {{-- Actions --}}
-                        <td class="px-6 py-4">
-                            <div class="flex items-center justify-end gap-2">
-                                {{-- Ping --}}
+                        <td class="data-table__actions">
+                            <div class="btn-action-group">
                                 <button onclick="pingConnection({{ $conn->id }}, this)"
                                     title="Tester la connexion"
-                                    class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-emerald-400 hover:border-emerald-500/40 transition-all">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    class="btn-action btn-action--success">
+                                    <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
                                     </svg>
                                 </button>
@@ -126,29 +118,28 @@
                                 {{-- Auth button --}}
                                 @if(!$conn->is_authenticated)
                                 <button onclick="openAuthModal({{ $conn->id }}, '{{ addslashes($conn->name) }}', {{ $conn->hasLoginUrl() ? 'true' : 'false' }})"
-                                    class="px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs hover:bg-indigo-500/20 transition-all">
+                                    class="btn-tag btn-tag--accent">
                                     🔑 S'authentifier
                                 </button>
                                 @else
                                 <button onclick="disconnectConnection({{ $conn->id }}, '{{ addslashes($conn->name) }}')"
-                                    class="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs hover:bg-red-500/20 transition-all">
+                                    class="btn-tag btn-tag--danger">
                                     🔌 Déconnecter
                                 </button>
                                 @endif
 
-                                {{-- Edit --}}
                                 <button onclick="openEditModal({{ $conn->id }}, '{{ addslashes($conn->name) }}', '{{ addslashes($conn->base_url) }}', '{{ addslashes($conn->login_url ?? '') }}', '{{ addslashes($conn->description ?? '') }}')"
-                                    class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-indigo-300 hover:border-indigo-500/40 transition-all">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    class="btn-action">
+                                    <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                                     </svg>
                                 </button>
 
                                 {{-- Delete --}}
-                                <form action="{{ route('connections.destroy', $conn) }}" method="POST" class="inline" onsubmit="return confirm('Supprimer cette connexion ?')">
+                                <form action="{{ route('connections.destroy', $conn) }}" method="POST" class="inline-form" onsubmit="return confirm('Supprimer cette connexion ?')">
                                     @csrf @method('DELETE')
-                                    <button class="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-500 hover:text-red-400 hover:border-red-500/40 transition-all">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <button type="submit" class="btn-action btn-action--danger">
+                                        <svg class="icon-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                         </svg>
                                     </button>
@@ -164,132 +155,75 @@
     </div>
 </div>
 
-{{-- ===== MODAL: ADD CONNECTION ===== --}}
-<div id="modal-add" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-    <div class="glass rounded-2xl border border-slate-700 w-full max-w-md p-6 mx-4">
-        <h2 class="text-lg font-semibold text-slate-100 mb-5">Nouvelle Connexion API</h2>
-        <form action="{{ route('connections.store') }}" method="POST" class="space-y-4">
-            @csrf
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Nom</label>
-                <input type="text" name="name" required placeholder="Caisse Principale"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">URL de base</label>
-                <input type="url" name="base_url" required placeholder="http://localhost:8000"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">URL de login <span class="text-slate-600">(optionnel, ex: /api/login)</span></label>
-                <input type="text" name="login_url" placeholder="/api/login"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Description <span class="text-slate-600">(optionnel)</span></label>
-                <input type="text" name="description" placeholder="ERP de gestion commerciale..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeModal('modal-add')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annuler</button>
-                <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-sm hover:from-indigo-500 hover:to-purple-600 transition-all">Ajouter</button>
-            </div>
-        </form>
+<div id="modal-add" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal__body">
+            <h2 class="modal__title">Nouvelle Connexion API</h2>
+            <form action="{{ route('connections.store') }}" method="POST">
+                @csrf
+                <div class="form-group"><label class="form-label">Nom</label><input type="text" name="name" required placeholder="Caisse Principale" class="form-control form-control--sm"></div>
+                <div class="form-group"><label class="form-label">URL de base</label><input type="url" name="base_url" required placeholder="http://localhost:8000" class="form-control form-control--sm form-control--mono"></div>
+                <div class="form-group"><label class="form-label">URL de login <span class="text-muted">(optionnel)</span></label><input type="text" name="login_url" placeholder="/api/login" class="form-control form-control--sm form-control--mono"></div>
+                <div class="form-group"><label class="form-label">Description <span class="text-muted">(optionnel)</span></label><input type="text" name="description" placeholder="ERP de gestion commerciale..." class="form-control form-control--sm"></div>
+                <div class="modal__footer">
+                    <button type="button" onclick="closeModal('modal-add')" class="btn btn-ghost btn-sm">Annuler</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Ajouter</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-{{-- ===== MODAL: EDIT CONNECTION ===== --}}
-<div id="modal-edit" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-    <div class="glass rounded-2xl border border-slate-700 w-full max-w-md p-6 mx-4">
-        <h2 class="text-lg font-semibold text-slate-100 mb-5">Modifier la Connexion</h2>
-        <form id="edit-form" method="POST" class="space-y-4">
-            @csrf @method('PUT')
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Nom</label>
-                <input type="text" name="name" id="edit-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">URL de base</label>
-                <input type="url" name="base_url" id="edit-url" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">URL de login <span class="text-slate-600">(optionnel)</span></label>
-                <input type="text" name="login_url" id="edit-login-url" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Description</label>
-                <input type="text" name="description" id="edit-desc" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
-            </div>
-            <div class="flex justify-end gap-3 pt-2">
-                <button type="button" onclick="closeModal('modal-edit')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annuler</button>
-                <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-sm hover:from-indigo-500 hover:to-purple-600 transition-all">Enregistrer</button>
-            </div>
-        </form>
+<div id="modal-edit" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal__body">
+            <h2 class="modal__title">Modifier la Connexion</h2>
+            <form id="edit-form" method="POST">
+                @csrf @method('PUT')
+                <div class="form-group"><label class="form-label">Nom</label><input type="text" name="name" id="edit-name" required class="form-control form-control--sm"></div>
+                <div class="form-group"><label class="form-label">URL de base</label><input type="url" name="base_url" id="edit-url" required class="form-control form-control--sm form-control--mono"></div>
+                <div class="form-group"><label class="form-label">URL de login <span class="text-muted">(optionnel)</span></label><input type="text" name="login_url" id="edit-login-url" class="form-control form-control--sm form-control--mono"></div>
+                <div class="form-group"><label class="form-label">Description</label><input type="text" name="description" id="edit-desc" class="form-control form-control--sm"></div>
+                <div class="modal__footer">
+                    <button type="button" onclick="closeModal('modal-edit')" class="btn btn-ghost btn-sm">Annuler</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-{{-- ===== MODAL: AUTHENTICATE ===== --}}
-<div id="modal-auth" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-sm">
-    <div class="glass rounded-2xl border border-slate-700 w-full max-w-md p-6 mx-4">
-        <h2 class="text-lg font-semibold text-slate-100 mb-1">S'authentifier</h2>
-        <p class="text-xs text-slate-500 mb-5" id="auth-modal-subtitle">Connexion à l'API</p>
-
-        {{-- Tab switcher --}}
-        <div class="flex gap-2 mb-5 p-1 bg-slate-900 rounded-lg">
-            <button id="tab-credentials" onclick="switchAuthTab('credentials')"
-                class="flex-1 py-1.5 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white">
-                Email / Mot de passe
-            </button>
-            <button id="tab-token" onclick="switchAuthTab('token')"
-                class="flex-1 py-1.5 rounded-md text-xs font-medium transition-all text-slate-400 hover:text-slate-200">
-                Token direct
-            </button>
-        </div>
-
-        {{-- Credentials form --}}
-        <div id="form-credentials" class="space-y-4">
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Email</label>
-                <input type="email" id="auth-email" placeholder="admin@example.com"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 outline-none">
+<div id="modal-auth" class="modal-overlay hidden">
+    <div class="modal">
+        <div class="modal__body">
+            <h2 class="modal__title">S'authentifier</h2>
+            <p class="form-hint mb-4" id="auth-modal-subtitle">Connexion à l'API</p>
+            <div class="tabs">
+                <button type="button" id="tab-credentials" onclick="switchAuthTab('credentials')" class="tab is-active">Email / Mot de passe</button>
+                <button type="button" id="tab-token" onclick="switchAuthTab('token')" class="tab">Token direct</button>
             </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Mot de passe</label>
-                <input type="password" id="auth-password" placeholder="••••••••"
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:ring-1 focus:ring-indigo-500 outline-none">
+            <div id="form-credentials">
+                <div class="form-group"><label class="form-label">Email</label><input type="email" id="auth-email" placeholder="admin@example.com" class="form-control form-control--sm"></div>
+                <div class="form-group"><label class="form-label">Mot de passe</label><input type="password" id="auth-password" placeholder="••••••••" class="form-control form-control--sm"></div>
+                <div id="auth-error" class="flash-message flash-message--error hidden" style="margin:0 0 1rem;"></div>
+                <div class="modal__footer">
+                    <button type="button" onclick="closeModal('modal-auth')" class="btn btn-ghost btn-sm">Annuler</button>
+                    <button type="button" onclick="submitAuth()" id="auth-submit-btn" class="btn btn-primary btn-sm">S'authentifier</button>
+                </div>
             </div>
-            <div id="auth-error" class="hidden px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs"></div>
-            <div class="flex justify-end gap-3">
-                <button type="button" onclick="closeModal('modal-auth')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annuler</button>
-                <button onclick="submitAuth()" id="auth-submit-btn"
-                    class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-sm hover:from-indigo-500 hover:to-purple-600 transition-all">
-                    S'authentifier
-                </button>
-            </div>
-        </div>
-
-        {{-- Token form --}}
-        <div id="form-token" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs font-medium text-slate-400 mb-1">Bearer Token</label>
-                <input type="text" id="direct-token" placeholder="1|xxxxxxxxxxxxxxxxxx..."
-                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm font-mono text-slate-100 focus:ring-1 focus:ring-indigo-500 outline-none">
-                <p class="text-[10px] text-slate-600 mt-1">Collez ici votre token Bearer généré depuis votre application.</p>
-            </div>
-            <div id="token-error" class="hidden px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs"></div>
-            <div class="flex justify-end gap-3">
-                <button type="button" onclick="closeModal('modal-auth')" class="px-4 py-2 text-sm text-slate-400 hover:text-slate-200">Annuler</button>
-                <button onclick="submitToken()" id="token-submit-btn"
-                    class="px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-700 text-white text-sm hover:from-indigo-500 hover:to-purple-600 transition-all">
-                    Enregistrer le Token
-                </button>
+            <div id="form-token" class="hidden">
+                <div class="form-group"><label class="form-label">Bearer Token</label><input type="text" id="direct-token" placeholder="1|xxxxxxxxxxxxxxxxxx..." class="form-control form-control--sm form-control--mono"><p class="form-hint">Collez ici votre token Bearer généré depuis votre application.</p></div>
+                <div id="token-error" class="flash-message flash-message--error hidden" style="margin:0 0 1rem;"></div>
+                <div class="modal__footer">
+                    <button type="button" onclick="closeModal('modal-auth')" class="btn btn-ghost btn-sm">Annuler</button>
+                    <button type="button" onclick="submitToken()" id="token-submit-btn" class="btn btn-primary btn-sm">Enregistrer le Token</button>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Toast --}}
-<div id="toast" class="fixed bottom-6 right-6 z-50 hidden"></div>
+<div id="toast" class="toast hidden"></div>
 @endsection
 
 @push('scripts')
@@ -302,14 +236,10 @@ let hasLoginUrl = false;
 // MODAL HELPERS
 // ========================
 function openModal(id) {
-    const el = document.getElementById(id);
-    el.classList.remove('hidden');
-    el.classList.add('flex');
+    document.getElementById(id)?.classList.remove('hidden');
 }
 function closeModal(id) {
-    const el = document.getElementById(id);
-    el.classList.add('hidden');
-    el.classList.remove('flex');
+    document.getElementById(id)?.classList.add('hidden');
 }
 
 // ========================
@@ -352,8 +282,8 @@ function switchAuthTab(tab) {
     const isCredentials = tab === 'credentials';
     document.getElementById('form-credentials').classList.toggle('hidden', !isCredentials);
     document.getElementById('form-token').classList.toggle('hidden', isCredentials);
-    document.getElementById('tab-credentials').className = `flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${isCredentials ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`;
-    document.getElementById('tab-token').className = `flex-1 py-1.5 rounded-md text-xs font-medium transition-all ${!isCredentials ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`;
+    document.getElementById('tab-credentials').classList.toggle('is-active', isCredentials);
+    document.getElementById('tab-token').classList.toggle('is-active', !isCredentials);
 }
 
 async function submitAuth() {
@@ -434,7 +364,7 @@ async function disconnectConnection(id, name) {
 async function pingConnection(id, btn) {
     btn.disabled = true;
     const orig = btn.innerHTML;
-    btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+    btn.innerHTML = '<svg class="icon-sm loading-spinner" fill="none" viewBox="0 0 24 24"><circle style="opacity:0.25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
 
     try {
         const res  = await fetch(`/connections/${id}/ping`);
@@ -459,13 +389,8 @@ function setButtonLoading(btn, loading) {
 }
 
 function showToast(msg, type = 'success') {
-    const colors = {
-        success: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300',
-        error:   'bg-red-500/20 border-red-500/40 text-red-300',
-        warning: 'bg-amber-500/20 border-amber-500/40 text-amber-300',
-    };
     const toast = document.getElementById('toast');
-    toast.className = `fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl border text-sm backdrop-blur-md shadow-xl ${colors[type] || colors.success}`;
+    toast.className = `toast toast--${type}`;
     toast.textContent = msg;
     toast.classList.remove('hidden');
     setTimeout(() => toast.classList.add('hidden'), 4000);

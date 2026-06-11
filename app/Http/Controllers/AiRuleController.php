@@ -12,14 +12,30 @@ class AiRuleController extends Controller
     /**
      * Show the rules management page.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $rules = AiRule::orderBy('created_at', 'desc')->get();
-        // Get unique postes and users for the dropdowns
+        $search = trim($request->query('search', ''));
+        $targetType = trim($request->query('target', ''));
+
+        $rulesQuery = AiRule::orderBy('created_at', 'desc');
+
+        if ($search !== '') {
+            $rulesQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('instruction', 'like', "%{$search}%")
+                      ->orWhere('target_value', 'like', "%{$search}%");
+            });
+        }
+
+        if ($targetType !== '') {
+            $rulesQuery->where('target_type', $targetType);
+        }
+
+        $rules = $rulesQuery->get();
         $postes = User::whereNotNull('poste')->distinct()->pluck('poste');
         $users = User::orderBy('name')->get();
 
-        return view('ai-rules.index', compact('rules', 'postes', 'users'));
+        return view('ai-rules.index', compact('rules', 'postes', 'users', 'search', 'targetType'));
     }
 
     /**

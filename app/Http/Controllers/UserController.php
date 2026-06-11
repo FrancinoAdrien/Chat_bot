@@ -12,10 +12,22 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::orderBy('name')->get();
-        return view('users.index', compact('users'));
+        $search = trim($request->query('search', ''));
+        $usersQuery = User::orderBy('name');
+
+        if ($search !== '') {
+            $usersQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('prenom', 'like', "%{$search}%")
+                      ->orWhere('matricule', 'like', "%{$search}%")
+                      ->orWhere('poste', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $usersQuery->get();
+        return view('users.index', compact('users', 'search'));
     }
 
     /**

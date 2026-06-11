@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Theme Switcher</title>
+    <style>
+        :root {
+            --color-bg-primary: #0f172a;
+            --color-bg-secondary: #1e293b;
+            --color-text-primary: #f1f5f9;
+            --color-accent-primary: #818cf8;
+        }
+
+        [data-theme="light"] {
+            --color-bg-primary: #ffffff;
+            --color-bg-secondary: #f8fafc;
+            --color-text-primary: #1e293b;
+            --color-accent-primary: #6366f1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            transition: all 300ms ease;
+            padding: 40px;
+            margin: 0;
+        }
+
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--color-accent-primary);
+            margin-bottom: 30px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: var(--color-accent-primary);
+            color: white;
+            font-weight: 600;
+            transition: all 300ms ease;
+        }
+
+        button:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        button.active {
+            background: var(--color-bg-secondary);
+            color: var(--color-accent-primary);
+            border: 2px solid var(--color-accent-primary);
+        }
+
+        .status {
+            padding: 20px;
+            background: var(--color-bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status p {
+            margin: 5px 0;
+        }
+
+        code {
+            background: rgba(129, 140, 248, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎨 Test Theme Switcher</h1>
+        
+        <div class="button-group">
+            <button data-toggle-theme="dark" aria-pressed="true" class="active">🌙 Dark Mode</button>
+            <button data-toggle-theme="light" aria-pressed="false">☀️ Light Mode</button>
+        </div>
+
+        <div class="status">
+            <p><strong>Theme actuel:</strong> <code id="current-theme">dark</code></p>
+            <p><strong>data-theme attr:</strong> <code id="data-theme">-</code></p>
+            <p><strong>localStorage:</strong> <code id="storage-value">-</code></p>
+        </div>
+
+        <div style="padding: 20px; background: var(--color-bg-secondary); border-radius: 8px;">
+            <p>Le fond, le texte et les couleurs devraient changer au clic sur les boutons ci-dessus.</p>
+            <p>Les changements sont sauvegardés en localStorage et persistés au rechargement.</p>
+        </div>
+    </div>
+
+    <script>
+        // Simple theme switcher for testing
+        class TestThemeSwitcher {
+            constructor() {
+                this.storageKey = 'app-theme-preference';
+                this.init();
+            }
+
+            init() {
+                this.loadTheme();
+                this.setupEventListeners();
+                this.updateStatus();
+            }
+
+            loadTheme() {
+                const savedTheme = localStorage.getItem(this.storageKey);
+                if (savedTheme) {
+                    this.setTheme(savedTheme);
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    this.setTheme(prefersDark ? 'dark' : 'light');
+                }
+            }
+
+            setTheme(theme) {
+                const html = document.documentElement;
+                if (theme === 'light') {
+                    html.setAttribute('data-theme', 'light');
+                } else {
+                    html.removeAttribute('data-theme');
+                }
+                localStorage.setItem(this.storageKey, theme);
+                this.updateButtons();
+                this.updateStatus();
+            }
+
+            getCurrentTheme() {
+                return document.documentElement.getAttribute('data-theme') || 'dark';
+            }
+
+            updateButtons() {
+                const currentTheme = this.getCurrentTheme();
+                document.querySelectorAll('[data-toggle-theme]').forEach(btn => {
+                    const isActive = btn.getAttribute('data-toggle-theme') === currentTheme;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', isActive);
+                });
+            }
+
+            updateStatus() {
+                document.getElementById('current-theme').textContent = this.getCurrentTheme();
+                const attr = document.documentElement.getAttribute('data-theme');
+                document.getElementById('data-theme').textContent = attr || '(none - dark mode)';
+                document.getElementById('storage-value').textContent = localStorage.getItem(this.storageKey) || '(aucune)';
+            }
+
+            setupEventListeners() {
+                document.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-toggle-theme]');
+                    if (btn) {
+                        this.setTheme(btn.getAttribute('data-toggle-theme'));
+                    }
+                });
+            }
+        }
+
+        new TestThemeSwitcher();
+    </script>
+</body>
+</html>

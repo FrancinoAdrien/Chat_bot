@@ -15,12 +15,35 @@ use App\AI\ToolManager; // Note: We will inject ToolManager instead of DynamicAp
 
 class ToolController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $tools   = Tool::with('apiConnection')->latest()->paginate(20);
+        $search = trim($request->query('search', ''));
+        $connectionFilter = trim($request->query('connection', ''));
+
+        $toolsQuery = Tool::with('apiConnection')->latest();
+
+        if ($search !== '') {
+            $toolsQuery->where(function ($query) use ($search) {
+                $query->where('label', 'like', "%{$search}%")
+                      ->orWhere('name', 'like', "%{$search}%")
+                      ->orWhere('endpoint', 'like', "%{$search}%")
+                      ->orWhere('keywords', 'like', "%{$search}%")
+                      ->orWhereHas('apiConnection', function ($query) use ($search) {
+                          $query->where('name', 'like', "%{$search}%");
+                      });
+            });
+        }
+
+        if ($connectionFilter !== '') {
+            $toolsQuery->whereHas('apiConnection', function ($query) use ($connectionFilter) {
+                $query->where('name', 'like', "%{$connectionFilter}%");
+            });
+        }
+
+        $tools = $toolsQuery->paginate(20)->withQueryString();
         $connections = ApiConnection::active()->orderBy('name')->get();
 
-        return view('tools.index', compact('tools', 'connections'));
+        return view('tools.index', compact('tools', 'connections', 'search', 'connectionFilter'));
     }
 
     public function create(): View

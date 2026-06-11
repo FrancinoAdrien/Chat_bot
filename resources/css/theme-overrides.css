@@ -1,0 +1,52 @@
+/* ═══════════════════════════════════════════════════════════════════
+   THEME OVERRIDES — Ambient, body, composants spéciaux
+   ═══════════════════════════════════════════════════════════════════ */
+
+body {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* ─── Ambient Background ──────────────────────────────────────── */
+
+.ambient-bg > div:nth-child(1) {
+  background-color: color-mix(in srgb, var(--palette-indigo-500) 12%, transparent);
+}
+
+.ambient-bg > div:nth-child(2) {
+  background-color: color-mix(in srgb, var(--palette-purple-500) 10%, transparent);
+}
+
+.ambient-bg > div:nth-child(3) {
+  background-color: color-mix(in srgb, var(--palette-pink-500) 8%, transparent);
+}
+
+[data-theme="light"] .ambient-bg > div:nth-child(1) {
+  background-color: color-mix(in srgb, var(--palette-indigo-500) 8%, transparent);
+}
+
+[data-theme="light"] .ambient-bg > div:nth-child(2) {
+  background-color: color-mix(in srgb, var(--palette-purple-500) 6%, transparent);
+}
+
+[data-theme="light"] .ambient-bg > div:nth-child(3) {
+  background-color: color-mix(in srgb, var(--palette-pink-500) 5%, transparent);
+}
+
+/* ─── Glass (legacy class support) ─────────────────────────────── */
+
+.glass {
+  background: var(--color-bg-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border-light);
+}
+
+/* ─── Legacy nav class alias ──────────────────────────────────── */
+
+.nav-item-active {
+  color: var(--color-accent-primary) !important;
+  background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent) !important;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-accent-primary) 18%, transparent);
+}

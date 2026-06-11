@@ -15,10 +15,17 @@ class ApiConnectionController extends Controller
         private readonly DynamicApiService $apiService
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $connections = ApiConnection::latest()->get();
-        return view('connections.index', compact('connections'));
+        $search = trim($request->query('search', ''));
+        $connectionsQuery = ApiConnection::latest();
+
+        if ($search !== '') {
+            $connectionsQuery->where('name', 'like', "%{$search}%");
+        }
+
+        $connections = $connectionsQuery->get();
+        return view('connections.index', compact('connections', 'search'));
     }
 
     public function store(Request $request): RedirectResponse
