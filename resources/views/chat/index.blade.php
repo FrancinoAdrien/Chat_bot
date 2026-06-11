@@ -55,7 +55,7 @@
 @endsection
 
 @section('content')
-<div class="chat-page">
+<div class="chat-page" style="margin-top: 30px !important;">
 
     @if($connections->isNotEmpty())
     <div class="panel chat-window">
@@ -69,7 +69,7 @@
                     </svg>
                 </div>
                 <h3 class="chat-welcome__title">Comment puis-je vous aider ?</h3>
-                <p class="chat-welcome__text">Posez une question sur vos données. L'IA interrogera automatiquement votre système.</p>
+                <p class="chat-welcome__text">Posez une question sur vos données. L'IA repondra avec les donnees fournies.</p>
             </div>
             @else
             @foreach($conversations as $conv)

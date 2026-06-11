@@ -179,6 +179,9 @@ php artisan key:generate
 # 6. Exécuter les migrations
 php artisan migrate
 
+# Creation admin
+php artisan user:create-admin
+
 # 7. (Optionnel) Seeder d'admin
 php artisan db:seed
 
@@ -1327,6 +1330,7 @@ php artisan migrate:fresh        # Reset DB
 # Seeding
 php artisan db:seed              # Run all seeders
 php artisan db:seed --class=AdminUserSeeder
+php artisan user:create-admin    # Create admin
 
 # Testing
 composer run-script test

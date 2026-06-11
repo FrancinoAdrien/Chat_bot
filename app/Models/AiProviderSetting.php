@@ -62,7 +62,7 @@ class AiProviderSetting extends Model
         return match($provider) {
             'groq'   => 'llama-3.3-70b-versatile',
             'openai' => 'gpt-4o-mini',
-            'gemini' => 'gemini-1.5-flash',
+            'gemini' => 'gemini-3.5-flash',
             default  => 'llama-3.3-70b-versatile',
         };
     }

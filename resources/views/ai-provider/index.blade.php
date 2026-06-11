@@ -139,7 +139,7 @@
                 <p class="form-hint">
                     Groq: <code class="text-accent">llama-3.3-70b-versatile</code> ·
                     OpenAI: <code class="text-accent">gpt-4o-mini</code> ·
-                    Gemini: <code class="text-accent">gemini-1.5-flash</code>
+                    Gemini: <code class="text-accent">gemini-3.5-flash</code>
                 </p>
             </div>
 
@@ -154,7 +154,7 @@
 const modelDefaults = {
     groq:   'llama-3.3-70b-versatile',
     openai: 'gpt-4o-mini',
-    gemini: 'gemini-1.5-flash',
+    gemini: 'gemini-3.5-flash',
 };
 
 function updateModel(provider) {

@@ -11,7 +11,7 @@ class GeminiService
     private string $baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
     private int $timeout = 60;
 
-    public function generate(string $prompt, string $apiKey, string $model = 'gemini-1.5-flash'): string
+    public function generate(string $prompt, string $apiKey, string $model = 'gemini-3.5-flash'): string
     {
         Log::info('[Gemini] Generating response', ['model' => $model]);
 
@@ -56,7 +56,7 @@ class GeminiService
         }
     }
 
-    public function verify(string $apiKey, string $model = 'gemini-1.5-flash'): bool
+    public function verify(string $apiKey, string $model = 'gemini-3.5-flash'): bool
     {
         try {
             $response = Http::timeout(15)
